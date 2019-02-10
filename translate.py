@@ -5,6 +5,8 @@ import yaml
 
 from typology import Concept
 from boltons.iterutils import remap
+from utils import ordered_load
+from utils import ordered_dump
 
 
 def concept(concept_id, refresh=False, folder='.concept'):
@@ -22,7 +24,7 @@ def concept(concept_id, refresh=False, folder='.concept'):
         try:
             _concept = Concept(concept_id)
         except:
-            raise Exception('Could not retrieve concept.')
+            raise Warning('Could not retrieve concept.')
         _concept.aliases['__id__'] = _concept.id
         _concept.aliases['__url__'] = _concept.url
         with open('{}/{}'.format(folder, concept_id), 'w') as f:
@@ -66,7 +68,7 @@ def represent(meaning, lang):
 
         representations.append(name)
 
-    return '|'.join(representations)
+    return ' • '.join(representations)
 
 def translate(data, lang):
     '''
@@ -98,9 +100,9 @@ if __name__ == '__main__':
         print('Done.')
 
     else:
-        data = yaml.load(open('data/tree.yml', 'r'))
+        data = ordered_load(open('data/tree.yml', 'r'), yaml.SafeLoader)
         translation = translate(data, token)
 
         print(
-            yaml.dump(
-                translation, allow_unicode=True, default_flow_style=False))
+            ordered_dump(
+                translation, allow_unicode=True, default_flow_style=False, Dumper=yaml.SafeDumper))
