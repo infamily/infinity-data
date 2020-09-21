@@ -2,11 +2,12 @@ import os
 import re
 import sys
 import yaml
+import argparse, pathlib
 
 from typology import Concept
 from boltons.iterutils import remap
-from utils import ordered_load
-from utils import ordered_dump
+from syntrans.utils import ordered_load
+from syntrans.utils import ordered_dump
 
 
 def concept(concept_id, refresh=False, folder='.concept'):
@@ -34,7 +35,7 @@ def concept(concept_id, refresh=False, folder='.concept'):
         save(concept_id)
         print('GET: ', concept_id)
 
-    item = yaml.load(open('{}/{}'.format(folder, concept_id), 'r').read())
+    item = yaml.load(open('{}/{}'.format(folder, concept_id), 'r').read(), Loader=yaml.Loader)
     return item
 
 def conceptualize(string):
@@ -87,22 +88,39 @@ def translate(data, lang):
     remapped = remap(data, visit=visit)
     return remapped
 
-if __name__ == '__main__':
 
-    try:
-        token = sys.argv[1]
-    except:
-        token = 'en'
+def main():
 
-    if token.startswith('refresh'):
-        concept_id = sys.argv[2]
-        concept(concept_id, refresh=True)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-s', '--source', help='Source text file to parse.')
+    parser.add_argument('-l', '--language', help='Language reference, e.g., en, lt, ja, ru, cn.')
+    parser.add_argument('-r', '--refresh', help='Pass non-null to refresh.')
+    args = parser.parse_args()
+
+    CWD = pathlib.Path(os.getcwd())
+    LANGUAGE = args.language or 'en'
+    CONCEPT = args.refresh
+
+    SOURCE = args.source
+    if args.source:
+        s = pathlib.Path(SOURCE)
+        if s.expanduser() == s and not str(s).startswith(s._flavour.sep):
+            s = pathlib.Path(os.path.join(CWD, s))
+            SOURCE = s
+
+    if CONCEPT:
+        concept(CONCEPT, refresh=True)
         print('Done.')
 
-    else:
-        data = ordered_load(open('data/tree.yml', 'r'), yaml.SafeLoader)
-        translation = translate(data, token)
+    elif SOURCE:
+        data = ordered_load(open(SOURCE, 'r'), yaml.SafeLoader)
+        translation = translate(data, LANGUAGE)
 
         print(
             ordered_dump(
                 translation, allow_unicode=True, default_flow_style=False, Dumper=yaml.SafeDumper))
+
+
+
+if __name__ == '__main__':
+    main()

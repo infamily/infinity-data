@@ -1,3 +1,5 @@
 .env
-.concept
-__pycache__/
+*__pycache__*
+dist
+syntrans.egg-info/
+.concept/*
